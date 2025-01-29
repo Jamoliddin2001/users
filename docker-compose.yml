@@ -1,0 +1,67 @@
+version: '2.0'
+
+services:
+    #PHP Service
+    php:
+        build:
+            context: .
+            dockerfile: ./dockerfiles/php/Dockerfile
+        volumes:
+            - ./:/var/www
+            - ./dockerfiles/php/supervisor.conf:/etc/supervisord.conf
+        working_dir: /var/www
+        networks:
+            - app-network
+
+
+    #Nginx Service
+    webserver:
+        image: nginx
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./:/var/www
+            - ./dockerfiles/nginx/conf.d/:/etc/nginx/conf.d
+            - ./certs/selfsigned.crt:/etc/nginx/ssl_certs/rcs.mtm.tj.crt:ro
+            - ./certs/selfsigned.key:/etc/nginx/ssl_certs/rcs.mtm.tj.key:ro
+        networks:
+            - app-network
+
+
+    #Redis Service
+    redis:
+        image: redis:latest
+        ports:
+            - 6379:6379
+        networks:
+            - app-network
+
+    #PostgresDb Service
+    db:
+        build:
+            context: .
+            dockerfile: ./dockerfiles/postgres/Dockerfile
+        environment:
+            POSTGRES_PASSWORD: 123456
+            PGDATA: /var/lib/postgresql/data/pgdata
+        volumes:
+            - ./rcs_db/postgres_data:/var/lib/postgresql/data
+            - ./rcs_db/rcs_tbs/rcs_mtm_tbs:/var/lib/postgresql/rcs_tbs/rcs_mtm_tbs
+        ports:
+            - "5432:5432"
+        networks:
+            - app-network
+
+#Docker Networks
+networks:
+    app-network:
+        driver: bridge
+
+
+
+
+
+
+
+
